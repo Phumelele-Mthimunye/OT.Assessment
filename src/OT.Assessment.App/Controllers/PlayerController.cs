@@ -2,23 +2,29 @@
 using Microsoft.EntityFrameworkCore;
 using OT.Assessment.Tester.Data;
 using OT.Assessment.Tester.Infrastructure;
-using System;
-using System.Collections.Generic;
-using System.Linq;
+using RabbitMQ.Client;
+using System.Text;
+using System.Text.Json;
 
 
 namespace OT.Assessment.App.Controllers
 {
-
     [ApiController]
     [Route("api/player")]
-    public class PlayerController : ControllerBase
+    public class PlayerController : ControllerBase, IDisposable
     {
         private readonly AppDbContext _context;
+        private readonly IConnection _rabbitConnection;
+        private readonly IModel _rabbitChannel;
+        private bool _disposed = false;
 
         public PlayerController(AppDbContext context)
         {
             _context = context;
+            var factory = new ConnectionFactory() { HostName = "localhost", UserName = "guest", Password = "guest" };
+            _rabbitConnection = factory.CreateConnection();
+            _rabbitChannel = _rabbitConnection.CreateModel();
+            _rabbitChannel.QueueDeclare(queue: "casinoWagerQueue", durable: true, exclusive: false, autoDelete: false, arguments: null);
         }
 
         //POST api/player/casinowager
@@ -29,6 +35,9 @@ namespace OT.Assessment.App.Controllers
             {
                 return BadRequest("Invalid wager data.");
             }
+
+            var messageBody = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(wager));
+            _rabbitChannel.BasicPublish(exchange: "", routingKey: "casinoWagerQueue", basicProperties: null, body: messageBody);
 
             await _context.CasinoWagers.AddAsync(wager);
             await _context.SaveChangesAsync();
@@ -69,6 +78,31 @@ namespace OT.Assessment.App.Controllers
                 .ToListAsync();
 
             return Ok(topSpenders);
+        }
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (_disposed)
+                return;
+
+            if (disposing)
+            {
+                _rabbitChannel?.Close();
+                _rabbitConnection?.Close();
+            }
+
+            _disposed = true;
+        }
+
+        ~PlayerController()
+        {
+            Dispose(false);
         }
     }
 }
