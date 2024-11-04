@@ -1,108 +1,57 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using OT.Assessment.Tester.Data;
+using OT.Assessment.App.Models.Interfaces;
 using OT.Assessment.Tester.Infrastructure;
-using RabbitMQ.Client;
-using System.Text;
-using System.Text.Json;
-
 
 namespace OT.Assessment.App.Controllers
 {
     [ApiController]
     [Route("api/player")]
-    public class PlayerController : ControllerBase, IDisposable
+    public class PlayerController : ControllerBase
     {
-        private readonly AppDbContext _context;
-        private readonly IConnection _rabbitConnection;
-        private readonly IModel _rabbitChannel;
-        private bool _disposed = false;
+        private readonly IPlayerService _playerService;
 
-        public PlayerController(AppDbContext context)
+        public PlayerController(IPlayerService playerService)
         {
-            _context = context;
-            var factory = new ConnectionFactory() { HostName = "localhost", UserName = "guest", Password = "guest" };
-            _rabbitConnection = factory.CreateConnection();
-            _rabbitChannel = _rabbitConnection.CreateModel();
-            _rabbitChannel.QueueDeclare(queue: "casinoWagerQueue", durable: true, exclusive: false, autoDelete: false, arguments: null);
+            _playerService = playerService;
         }
 
-        //POST api/player/casinowager
         [HttpPost("casinoWager")]
         public async Task<IActionResult> CreateWager([FromBody] CasinoWager wager)
         {
-            if (wager == null || wager.AccountId == Guid.Empty || wager.Amount <= 0)
+            var result = await _playerService.AddWagerAsync(wager);
+
+            if (!result.IsSuccess)
             {
-                return BadRequest("Invalid wager data.");
+                return BadRequest(result.ErrorMessage);
             }
 
-            var messageBody = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(wager));
-            _rabbitChannel.BasicPublish(exchange: "", routingKey: "casinoWagerQueue", basicProperties: null, body: messageBody);
-
-            await _context.CasinoWagers.AddAsync(wager);
-            await _context.SaveChangesAsync();
-
-            return CreatedAtAction(nameof(GetWagersByPlayer), new { playerId = wager.AccountId }, wager);
+            return CreatedAtAction(nameof(GetWagersByPlayer), new { playerId = result.Wager.AccountId }, result.Wager);
         }
 
-        //GET api/player/{playerId}/wagers
         [HttpGet("{playerId}/wagers")]
         public async Task<IActionResult> GetWagersByPlayer(Guid playerId)
         {
-            var playerWagers = await _context.CasinoWagers
-                .Where(w => w.AccountId == playerId)
-                .ToListAsync();
+            var result = await _playerService.GetWagersByPlayerAsync(playerId, 1, 10);
 
-            if (!playerWagers.Any())
+            if (!result.IsSuccess)
             {
-                return NotFound("No wagers found for this player.");
+                return NotFound(result.ErrorMessage);
             }
 
-            return Ok(playerWagers);
+            return Ok(result.WagerResponse);
         }
 
-
-        //GET api/player/topSpenders?count=10
         [HttpGet("topSpenders")]
         public async Task<IActionResult> GetTopSpenders([FromQuery] int count = 10)
         {
-            var topSpenders = await _context.CasinoWagers
-                .GroupBy(w => w.AccountId)
-                .Select(group => new
-                {
-                    AccountId = group.Key,
-                    TotalWagerAmount = group.Sum(w => w.Amount)
-                })
-                .OrderByDescending(player => player.TotalWagerAmount)
-                .Take(count)
-                .ToListAsync();
+            var result = await _playerService.GetTopSpendersAsync(count);
 
-            return Ok(topSpenders);
-        }
-
-        public void Dispose()
-        {
-            Dispose(true);
-            GC.SuppressFinalize(this);
-        }
-
-        protected virtual void Dispose(bool disposing)
-        {
-            if (_disposed)
-                return;
-
-            if (disposing)
+            if (!result.IsSuccess)
             {
-                _rabbitChannel?.Close();
-                _rabbitConnection?.Close();
+                return BadRequest(result.ErrorMessage);
             }
 
-            _disposed = true;
-        }
-
-        ~PlayerController()
-        {
-            Dispose(false);
+            return Ok(result.TopSpenders);
         }
     }
 }
