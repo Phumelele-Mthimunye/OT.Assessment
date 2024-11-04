@@ -1,8 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using OT.Assessment.App.Adapters;
+using OT.Assessment.App.Data;
 using OT.Assessment.App.Models.Interfaces;
 using OT.Assessment.App.Services;
-using OT.Assessment.Tester.Data;
 using System.Reflection;
 
 var builder = WebApplication.CreateBuilder(args);

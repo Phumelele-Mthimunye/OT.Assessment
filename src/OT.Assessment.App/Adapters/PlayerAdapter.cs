@@ -1,4 +1,4 @@
-﻿using OT.Assessment.Tester.Data;
+﻿using OT.Assessment.App.Data;
 using RabbitMQ.Client;
 using System.Text;
 using System.Text.Json;

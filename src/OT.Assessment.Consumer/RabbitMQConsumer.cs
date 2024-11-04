@@ -1,5 +1,5 @@
-﻿using OT.Assessment.Tester.Data;
-using OT.Assessment.Tester.Infrastructure;
+﻿using OT.Assessment.App.Data;
+using OT.Assessment.App.Infrastructure;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using System.Text;
