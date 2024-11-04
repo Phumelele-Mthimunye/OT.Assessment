@@ -1,74 +1,57 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using OT.Assessment.Tester.Data;
-using OT.Assessment.Tester.Infrastructure;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-
+using OT.Assessment.App.Models.Interfaces;
+using OT.Assessment.App.Infrastructure;
 
 namespace OT.Assessment.App.Controllers
 {
-
     [ApiController]
     [Route("api/player")]
     public class PlayerController : ControllerBase
     {
-        private readonly AppDbContext _context;
+        private readonly IPlayerService _playerService;
 
-        public PlayerController(AppDbContext context)
+        public PlayerController(IPlayerService playerService)
         {
-            _context = context;
+            _playerService = playerService;
         }
 
-        //POST api/player/casinowager
         [HttpPost("casinoWager")]
         public async Task<IActionResult> CreateWager([FromBody] CasinoWager wager)
         {
-            if (wager == null || wager.AccountId == Guid.Empty || wager.Amount <= 0)
+            var result = await _playerService.AddWagerAsync(wager);
+
+            if (!result.IsSuccess)
             {
-                return BadRequest("Invalid wager data.");
+                return BadRequest(result.ErrorMessage);
             }
 
-            await _context.CasinoWagers.AddAsync(wager);
-            await _context.SaveChangesAsync();
-
-            return CreatedAtAction(nameof(GetWagersByPlayer), new { playerId = wager.AccountId }, wager);
+            return CreatedAtAction(nameof(GetWagersByPlayer), new { playerId = result.Wager.AccountId }, result.Wager);
         }
 
-        //GET api/player/{playerId}/wagers
         [HttpGet("{playerId}/wagers")]
         public async Task<IActionResult> GetWagersByPlayer(Guid playerId)
         {
-            var playerWagers = await _context.CasinoWagers
-                .Where(w => w.AccountId == playerId)
-                .ToListAsync();
+            var result = await _playerService.GetWagersByPlayerAsync(playerId, 1, 10);
 
-            if (!playerWagers.Any())
+            if (!result.IsSuccess)
             {
-                return NotFound("No wagers found for this player.");
+                return NotFound(result.ErrorMessage);
             }
 
-            return Ok(playerWagers);
+            return Ok(result.WagerResponse);
         }
 
-
-        //GET api/player/topSpenders?count=10
         [HttpGet("topSpenders")]
         public async Task<IActionResult> GetTopSpenders([FromQuery] int count = 10)
         {
-            var topSpenders = await _context.CasinoWagers
-                .GroupBy(w => w.AccountId)
-                .Select(group => new
-                {
-                    AccountId = group.Key,
-                    TotalWagerAmount = group.Sum(w => w.Amount)
-                })
-                .OrderByDescending(player => player.TotalWagerAmount)
-                .Take(count)
-                .ToListAsync();
+            var result = await _playerService.GetTopSpendersAsync(count);
 
-            return Ok(topSpenders);
+            if (!result.IsSuccess)
+            {
+                return BadRequest(result.ErrorMessage);
+            }
+
+            return Ok(result.TopSpenders);
         }
     }
 }

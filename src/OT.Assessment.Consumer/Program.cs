@@ -10,7 +10,7 @@ var host = Host.CreateDefaultBuilder(args)
     .ConfigureServices((context, services) =>
     {
         //configure services
-      
+        services.AddHostedService<RabbitMQConsumer>();
     })
     .Build();
 

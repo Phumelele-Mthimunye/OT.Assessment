@@ -1,11 +1,17 @@
 using Microsoft.EntityFrameworkCore;
-using OT.Assessment.Tester.Data;
+using OT.Assessment.App.Adapters;
+using OT.Assessment.App.Data;
+using OT.Assessment.App.Models.Interfaces;
+using OT.Assessment.App.Services;
 using System.Reflection;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DatabaseConnection")));
+
+builder.Services.AddScoped<IPlayerService, PlayerService>();
+builder.Services.AddScoped<IPlayerAdapter, PlayerAdapter>();
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckl
 builder.Services.AddEndpointsApiExplorer();

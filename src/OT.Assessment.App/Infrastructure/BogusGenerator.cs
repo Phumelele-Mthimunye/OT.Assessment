@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace OT.Assessment.Tester.Infrastructure
+namespace OT.Assessment.App.Infrastructure
 {
     public class BogusGenerator
     {

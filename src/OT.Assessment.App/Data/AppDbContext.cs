@@ -1,7 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using OT.Assessment.Tester.Infrastructure;
+using OT.Assessment.App.Infrastructure;
 
-namespace OT.Assessment.Tester.Data
+namespace OT.Assessment.App.Data
 {
     public class AppDbContext : DbContext
     {
