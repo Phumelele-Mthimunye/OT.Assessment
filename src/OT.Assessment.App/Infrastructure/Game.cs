@@ -2,7 +2,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace OT.Assessment.Tester.Infrastructure
+namespace OT.Assessment.App.Infrastructure
 {
     public class Game
     {

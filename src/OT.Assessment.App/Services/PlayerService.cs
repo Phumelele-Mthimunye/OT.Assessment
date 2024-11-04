@@ -1,6 +1,6 @@
 ﻿using OT.Assessment.App.Models;
 using OT.Assessment.App.Models.Interfaces;
-using OT.Assessment.Tester.Infrastructure;
+using OT.Assessment.App.Infrastructure;
 
 namespace OT.Assessment.App.Services
 {

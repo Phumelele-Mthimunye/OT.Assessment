@@ -4,7 +4,7 @@ using System.Text;
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using OT.Assessment.App.Models.Interfaces;
-using OT.Assessment.Tester.Infrastructure;
+using OT.Assessment.App.Infrastructure;
 using OT.Assessment.App.Models;
 
 namespace OT.Assessment.App.Adapters

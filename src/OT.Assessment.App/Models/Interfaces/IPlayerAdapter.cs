@@ -1,4 +1,4 @@
-﻿using OT.Assessment.Tester.Infrastructure;
+﻿using OT.Assessment.App .Infrastructure;
 
 namespace OT.Assessment.App.Models.Interfaces
 {
