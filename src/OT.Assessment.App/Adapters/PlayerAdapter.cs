@@ -115,7 +115,7 @@ namespace OT.Assessment.App.Adapters
                 .Select(group => new
                 {
                     AccountId = group.Key,
-                    Username = group.Select(w => w.Username).ToString(),
+                    Username = group.Select(w => w.Username),
                     TotalWagerAmount = group.Sum(w => w.Amount) 
                 })
                 .OrderByDescending(player => player.TotalWagerAmount) // Order by total wager amount descending
